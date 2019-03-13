@@ -1,0 +1,3 @@
+/home/chen/AIrobot/build/CMakeFiles/edit_cache.dir
+/home/chen/AIrobot/build/CMakeFiles/rebuild_cache.dir
+/home/chen/AIrobot/build/CMakeFiles/sample.dir

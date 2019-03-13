@@ -1,0 +1,3 @@
+/home/chen/AIrobot/Final1/build/CMakeFiles/edit_cache.dir
+/home/chen/AIrobot/Final1/build/CMakeFiles/rebuild_cache.dir
+/home/chen/AIrobot/Final1/build/CMakeFiles/AiRobot_Cam1.dir
