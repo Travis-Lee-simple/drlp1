@@ -1,3 +1,6 @@
+'''
+designed for lab1 wirobot track
+'''
 import time
 import struct
 import numpy as np
@@ -155,3 +158,12 @@ class SimRobot():
             data = str(xyz_pts[i][0]) + ', ' + str(xyz_pts[i][1]) + ', ' +  str(xyz_pts[i][2]) + '\n'
             pc_file.write(data)
         pc_file.close()
+
+    def turn_left(degree=30):
+        pass
+
+    def turn_right(degree=30):
+        pass
+
+    def go_straight(dist=0.2):
+        pass
