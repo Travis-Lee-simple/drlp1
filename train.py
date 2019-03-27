@@ -73,10 +73,14 @@ def createNetwork():
     h_pool1 = max_pool_2x2(h_conv1)
 
     h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2, 2) + b_conv2)
-    h_pool2 = max_pool_2x2(h_conv2)
+    #h_pool2 = max_pool_2x2(h_conv2)
 
     h_conv3 = tf.nn.relu(conv2d(h_conv2, W_conv3, 1) + b_conv3)
     h_pool3 = max_pool_2x2(h_conv3)
+    print(h_conv1.shape)
+    print(h_conv2.shape)
+
+    print(h_conv3.shape)
 
     #h_pool3_flat = tf.reshape(h_pool3, [-1, 256])
     h_conv3_flat = tf.reshape(h_conv3, [-1, 1600])
@@ -152,6 +156,7 @@ def trainNetwork(s, readout, h_fc1, sess):
             ret, x_t1 = cv2.threshold(x_t1,1,255,cv2.THRESH_BINARY)
             x_t1 = np.reshape(x_t1, (80, 80, 1))
             s_t1 = np.append(x_t1, s_t[:,:,0:3], axis = 2)
+            print('s_t1:',s_t1.shape)
 
             # store the transition in D
             D.append((s_t, a_t, r_t, s_t1, terminal))

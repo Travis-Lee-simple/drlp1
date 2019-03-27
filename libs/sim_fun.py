@@ -31,6 +31,39 @@ class SimRobot():
     def check_sim(self):
         pass
 
+    def get_3dcamera_data(self, camera_handle):
+
+        # Get color image from simulation
+        sim_ret, resolution, raw_image = vrep.simxGetVisionSensorImage(self.sim_client, camera_handle, 0, vrep.simx_opmode_blocking)
+        
+        color_img = np.asarray(raw_image)
+        print(color_img.shape)
+        
+        color_img.shape = (resolution[1], resolution[0], 3)
+        color_img = color_img.astype(np.float) / 255
+        color_img[color_img < 0] += 1
+        color_img *= 255
+        color_img = np.fliplr(color_img)
+        color_img = color_img.astype(np.uint8)
+
+        #cv2.imshow('raw_image',color_img)
+        #cv2.waitKey(0)
+        #color_img=cv2.mat(color_img)
+        
+        
+
+        '''
+        # Get depth image from simulation
+        sim_ret, resolution, depth_buffer = vrep.simxGetVisionSensorDepthBuffer(self.sim_client, camera_handle, vrep.simx_opmode_blocking)
+        depth_img = np.asarray(depth_buffer)
+        depth_img.shape = (resolution[1], resolution[0])
+        depth_img = np.fliplr(depth_img)
+        zNear = 0.01
+        zFar = 10
+        depth_img = depth_img * (zFar - zNear) + zNear
+        '''
+        return color_img #, depth_img
+
     def get_camera_data(self, camera_handle):
 
         # Get color image from simulation

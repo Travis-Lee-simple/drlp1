@@ -45,41 +45,48 @@ def bias_variable(shape):
 def conv2d(x, W, stride):
     return tf.nn.conv2d(x, W, strides = [1, stride, stride, 1], padding = "SAME")
 
+def conv3d(x,kernal,stride):
+    return tf.nn.conv3d(x, kernal, strides = [1, 1, stride, stride, 1], padding = "SAME")
+
 def max_pool_2x2(x):
     return tf.nn.max_pool(x, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "SAME")
 
+def max_pool3d_2x2(x):
+    return tf.nn.max_pool3d(x, ksize = [1, 3, 2, 2, 1], strides = [1, 1, 2, 2, 1], padding = "SAME")
+
+
 def createNetwork():
     # network weights
-    W_conv1 = weight_variable([8, 8, 4, 32])
+    W_conv1 = weight_variable([3, 8, 8, 4, 32])
     b_conv1 = bias_variable([32])
 
-    W_conv2 = weight_variable([4, 4, 32, 64])
+    W_conv2 = weight_variable([3, 4, 4, 32, 64])
     b_conv2 = bias_variable([64])
 
-    W_conv3 = weight_variable([3, 3, 64, 64])
+    W_conv3 = weight_variable([3, 3, 3, 64, 64])
     b_conv3 = bias_variable([64])
     
-    W_fc1 = weight_variable([1600, 512])
+    W_fc1 = weight_variable([4800, 512])
     b_fc1 = bias_variable([512])
 
     W_fc2 = weight_variable([512, ACTIONS])
     b_fc2 = bias_variable([ACTIONS])
 
     # input layer
-    s = tf.placeholder("float", [None, 80, 80, 4])
+    s = tf.placeholder("float", [None, 3, 80, 80, 4])
 
     # hidden layers
-    h_conv1 = tf.nn.relu(conv2d(s, W_conv1, 4) + b_conv1)
-    h_pool1 = max_pool_2x2(h_conv1)
+    h_conv1 = tf.nn.relu(conv3d(s, W_conv1, 4) + b_conv1)
+    h_pool1 = max_pool3d_2x2(h_conv1)
 
-    h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2, 2) + b_conv2)
-    h_pool2 = max_pool_2x2(h_conv2)
+    h_conv2 = tf.nn.relu(conv3d(h_pool1, W_conv2, 2) + b_conv2)
+    #h_pool2 = max_pool3d_2x2(h_conv2)
 
-    h_conv3 = tf.nn.relu(conv2d(h_conv2, W_conv3, 1) + b_conv3)
-    h_pool3 = max_pool_2x2(h_conv3)
+    h_conv3 = tf.nn.relu(conv3d(h_conv2, W_conv3, 1) + b_conv3)
+    h_pool3 = max_pool3d_2x2(h_conv3)
 
     #h_pool3_flat = tf.reshape(h_pool3, [-1, 256])
-    h_conv3_flat = tf.reshape(h_conv3, [-1, 1600])
+    h_conv3_flat = tf.reshape(h_conv3, [-1, 4800])
 
     h_fc1 = tf.nn.relu(tf.matmul(h_conv3_flat, W_fc1) + b_fc1)
 
@@ -110,9 +117,13 @@ def trainNetwork(s, readout, h_fc1, sess):
     do_nothing = np.zeros(ACTIONS)
     do_nothing[0] = 1
     x_t, r_0, terminal = game_state.frame_step(do_nothing)
-    x_t = cv2.cvtColor(cv2.resize(x_t, (80, 80)), cv2.COLOR_BGR2GRAY)
+    x_t = cv2.resize(x_t, (80, 80))
+    x_t=x_t.swapaxes(1,2)
+    x_t=x_t.swapaxes(0,1)
+    #x_t = cv2.cvtColor(cv2.resize(x_t, (80, 80, 3)), cv2.COLOR_BGR2GRAY)
     ret, x_t = cv2.threshold(x_t,1,255,cv2.THRESH_BINARY)
-    s_t = np.stack((x_t, x_t, x_t, x_t), axis = 2)
+    s_t = np.stack((x_t, x_t, x_t, x_t), axis = 3)
+    #print(s_t.shape)
 
     # saving and loading networks
     saver = tf.train.Saver()
@@ -148,10 +159,12 @@ def trainNetwork(s, readout, h_fc1, sess):
             x_t1_col, r_t, terminal = game_state.frame_step(a_t)
             if(terminal):
                 episode+=1
-            x_t1 = cv2.cvtColor(cv2.resize(x_t1_col, (80, 80)), cv2.COLOR_BGR2GRAY)
-            ret, x_t1 = cv2.threshold(x_t1,1,255,cv2.THRESH_BINARY)
-            x_t1 = np.reshape(x_t1, (80, 80, 1))
-            s_t1 = np.append(x_t1, s_t[:,:,0:3], axis = 2)
+            x_t = cv2.resize(x_t1_col, (80, 80))
+            x_t=x_t.swapaxes(1,2)
+            x_t=x_t.swapaxes(0,1)
+            ret, x_t1 = cv2.threshold(x_t,1,255,cv2.THRESH_BINARY)
+            x_t1=np.reshape(x_t1,(3,80,80,1))
+            s_t1 = np.append(x_t1, s_t[:,:,:,0:3], axis = 3)
 
             # store the transition in D
             D.append((s_t, a_t, r_t, s_t1, terminal))
