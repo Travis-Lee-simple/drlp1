@@ -37,7 +37,7 @@ class SimRobot():
         sim_ret, resolution, raw_image = vrep.simxGetVisionSensorImage(self.sim_client, camera_handle, 0, vrep.simx_opmode_blocking)
         
         color_img = np.asarray(raw_image)
-        print(color_img.shape)
+        #print(color_img.shape)
         
         color_img.shape = (resolution[1], resolution[0], 3)
         color_img = color_img.astype(np.float) / 255
@@ -70,7 +70,7 @@ class SimRobot():
         sim_ret, resolution, raw_image = vrep.simxGetVisionSensorImage(self.sim_client, camera_handle, 0, vrep.simx_opmode_blocking)
         
         color_img = np.asarray(raw_image)
-        print(color_img.shape)
+        #print(color_img.shape)
         
         color_img.shape = (resolution[1], resolution[0], 3)
         color_img = color_img.astype(np.float) / 255
@@ -122,8 +122,8 @@ class SimRobot():
         self.s_pose = self.get_camera_pose(self.static_cam_handle)
         #self.g_pose = self.get_camera_pose(self.gripper_cam_handle)
 
-        print('s_pose is :')
-        print(self.s_pose)
+        #print('s_pose is :')
+        #print(self.s_pose)
         #print('g_pose is :')
         #print(self.g_pose)
 
@@ -192,11 +192,21 @@ class SimRobot():
             pc_file.write(data)
         pc_file.close()
 
-    def turn_left(degree=30):
-        pass
+    def turn_left(self):
+        self.set_Tank_Param(3)
 
-    def turn_right(degree=30):
-        pass
+    def turn_right(self):
+        self.set_Tank_Param(4)
 
-    def go_straight(dist=0.2):
-        pass
+    def go_straight(self):
+        self.set_Tank_Param(1)
+
+    def go_back(self):
+        self.set_Tank_Param(2)
+
+    def set_Tank_Param(self,index):
+        x=[0,0,0,0,0]
+        x[index]=1
+        #x=[0,1,0,0,0]
+        vrep.simxCallScriptFunction(self.sim_client,'Edgeless#0',vrep.sim_scripttype_childscript,'set_Tank_Param',
+            x,[],[],bytearray(),vrep.simx_opmode_blocking)

@@ -3,6 +3,7 @@ import numpy as np
 from libs import sim_fun
 from libs import vrep
 import scipy.misc
+import cv2
 
 # Modified from Tetromino by Al Sweigart al@inventwithpython.com
 # http://inventwithpython.com/pygame
@@ -34,17 +35,20 @@ class GameState:
 
         # moving the piece sideways
         if (input[1] == 1) :
-            self.scene.turn_left()
-            print('turn_left:',input)
+            self.scene.go_straight()
+            print('go_straight:',input)
 
         elif (input[2] == 1) :
-            self.scene.turn_right()
-            print('turn_right:',input)
+            self.scene.go_back()
+            print('go_back:',input)
 
         # rotating the piece (if there is room to rotate)
         elif (input[3] == 1):
-            self.scene.go_straight()
-            print('go_straight:',input)
+            self.scene.turn_left()
+            print('turn_left:',input)
+        elif (input[4] == 1):
+            self.scene.turn_right()
+            print('turn_right:',input)
 
         # drawing everything on the screen
         reward=self.getReward()
@@ -59,7 +63,7 @@ class GameState:
 
     def getCameraData(self):
     	sim_ret, camera_handle = vrep.simxGetObjectHandle(self.scene.sim_client,CAMARA_NAME,vrep.simx_opmode_blocking)
-    	return self.scene.get_camera_data(camera_handle)
+    	return self.scene.get_3dcamera_data(camera_handle)
 
     def ifTerminal(self):
         return False

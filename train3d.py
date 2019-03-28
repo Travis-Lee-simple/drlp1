@@ -19,20 +19,22 @@ import numpy as np
 from collections import deque
 
 GAME = 'parking' # the name of the game being played for log files
-ACTIONS = 4   # number of valid actions 6-5
+ACTIONS = 5   # number of valid actions 6-5
 GAMMA = 0.99 # decay rate of past observations
-OBSERVE = 5. # timesteps to observe before training
+OBSERVE = 50. # timesteps to observe before training
 EXPLORE = 500. # frames over which to anneal epsilon
 FINAL_EPSILON = 0.05 
 INITIAL_EPSILON = 1.0 # starting value of epsilon
 REPLAY_MEMORY = 590000 # number of previous transitions to remember
 BATCH = 32 # size of minibatch
-K = 1 # only select an action every Kth frame, repeat prev for others
+K = 5 # only select an action every Kth frame, repeat prev for others
 
 #END CONDITIONS
 FINAL_EPISODE=10000 
 FINAL_TIME_STEP=FINAL_EPISODE*100
 
+#ASSISTANT VARIABLES
+WRITE_IMG=True
 
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev = 0.01)
@@ -114,9 +116,9 @@ def trainNetwork(s, readout, h_fc1, sess):
     h_file = open("logs_" + GAME + "/hidden.txt", 'w')
 
     # get the first state by doing nothing and preprocess the image to 80x80x4
-    do_nothing = np.zeros(ACTIONS)
-    do_nothing[0] = 1
-    x_t, r_0, terminal = game_state.frame_step(do_nothing)
+    go_straight = np.zeros(ACTIONS)
+    go_straight[1] = 1
+    x_t, r_0, terminal = game_state.frame_step(go_straight)
     x_t = cv2.resize(x_t, (80, 80))
     x_t=x_t.swapaxes(1,2)
     x_t=x_t.swapaxes(0,1)
@@ -128,7 +130,7 @@ def trainNetwork(s, readout, h_fc1, sess):
     # saving and loading networks
     saver = tf.train.Saver()
     sess.run(tf.global_variables_initializer())
-    checkpoint = tf.train.get_checkpoint_state("saved_networks")
+    checkpoint = tf.train.get_checkpoint_state("parking_saved_networks")
     if checkpoint and checkpoint.model_checkpoint_path:
         saver.restore(sess, checkpoint.model_checkpoint_path)
         print ("Successfully loaded:", checkpoint.model_checkpoint_path)
@@ -160,6 +162,8 @@ def trainNetwork(s, readout, h_fc1, sess):
             if(terminal):
                 episode+=1
             x_t = cv2.resize(x_t1_col, (80, 80))
+            if(ifWriteImg(time_step)):
+                cv2.imwrite('what_I_see.jpg',x_t)
             x_t=x_t.swapaxes(1,2)
             x_t=x_t.swapaxes(0,1)
             ret, x_t1 = cv2.threshold(x_t,1,255,cv2.THRESH_BINARY)
@@ -230,6 +234,11 @@ def playGame():
 
 def main():
     playGame()
+
+def ifWriteImg(t):
+    if(t%10==0):
+        return True
+    return False
 
 if __name__ == "__main__":
     main()
