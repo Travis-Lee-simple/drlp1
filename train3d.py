@@ -18,10 +18,10 @@ import random
 import numpy as np
 from collections import deque
 
-GAME = 'getball' # the name of the game being played for log files
+GAME = 'parking' # the name of the game being played for log files
 ACTIONS = 4   # number of valid actions 6-5
 GAMMA = 0.99 # decay rate of past observations
-OBSERVE = 50. # timesteps to observe before training
+OBSERVE = 5. # timesteps to observe before training
 EXPLORE = 500. # frames over which to anneal epsilon
 FINAL_EPSILON = 0.05 
 INITIAL_EPSILON = 1.0 # starting value of epsilon
