@@ -27,7 +27,7 @@ FINAL_EPSILON = 0.05
 INITIAL_EPSILON = 1.0 # starting value of epsilon
 REPLAY_MEMORY = 590000 # number of previous transitions to remember
 BATCH = 32 # size of minibatch
-K = 5 # only select an action every Kth frame, repeat prev for others
+K = 2 # only select an action every Kth frame, repeat prev for others
 
 #END CONDITIONS
 FINAL_EPISODE=10000 
@@ -159,8 +159,7 @@ def trainNetwork(s, readout, h_fc1, sess):
         for i in range(0, K):
             # run the selected action and observe next state and reward
             x_t1_col, r_t, terminal = game_state.frame_step(a_t)
-            if(terminal):
-                episode+=1
+                
             x_t = cv2.resize(x_t1_col, (80, 80))
             if(ifWriteImg(time_step)):
                 cv2.imwrite('what_I_see.jpg',x_t)
@@ -205,8 +204,8 @@ def trainNetwork(s, readout, h_fc1, sess):
         s_t = s_t1
         time_step += 1
 
-        # save progress every 10000 iterations
-        if time_step % 50 == 0:
+        # save progress 
+        if time_step % 200 == 0:
             saver.save(sess, 'saved_networks/' + GAME + '-dqn', global_step = time_step)
 
         # print info
@@ -219,6 +218,9 @@ def trainNetwork(s, readout, h_fc1, sess):
             state = "train"
         print ("TIMESTEP", time_step, "/ STATE", state,  "/ EPSILON", epsilon, "/ ACTION", action_index, "/ REWARD", r_t, "/ Q_MAX %e" % np.max(readout_t))
 
+        if(terminal):
+            episode+=1
+            new_episode(game_state)
         # write info to files
         '''
         if t % 10000 <= 100:
@@ -235,10 +237,15 @@ def playGame():
 def main():
     playGame()
 
+    
+
 def ifWriteImg(t):
     if(t%10==0):
         return True
     return False
+
+def new_episode(game_state):
+    game_state.reinit()
 
 if __name__ == "__main__":
     main()

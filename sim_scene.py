@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+#coding:utf-8
 import time
 import numpy as np
 from libs import sim_fun
@@ -25,40 +27,55 @@ class GameState:
         # setup variables for the start of the game
         self.time_step=0
 
+
+
     def reinit(self):
+        self.terminate_flag=False
+        self.set_Tank_Random_Pos()
         self.scene.restart_sim()
+
+
+    def set_Tank_Random_Pos(self):
+        pos=np.random.uniform(0,1,size=(2,1))
+        pos[0]=pos[0]*8.5-8
+        pos[1]=pos[1]*7.5-2.5
+        self.scene.setTankPos(pos)
 
         
     def frame_step(self,input):
-        terminal=False
         self.time_step=self.time_step+1
 
         # moving the piece sideways
         if (input[1] == 1) :
             self.scene.go_straight()
-            print('go_straight:',input)
+            #print('go_straight:',input)
 
         elif (input[2] == 1) :
             self.scene.go_back()
-            print('go_back:',input)
+            #print('go_back:',input)
 
         # rotating the piece (if there is room to rotate)
         elif (input[3] == 1):
             self.scene.turn_left()
-            print('turn_left:',input)
+            #print('turn_left:',input)
         elif (input[4] == 1):
             self.scene.turn_right()
-            print('turn_right:',input)
+            #print('turn_right:',input)
 
         # drawing everything on the screen
+        self.terminate_flag=self.ifTerminal()
         reward=self.getReward()
         image_data=self.getCameraData()
-        terminal=self.ifTerminal()
 
-        return image_data, reward, terminal
+        return image_data, reward, self.terminate_flag
 
 
     def getReward(self):
+        if(self.terminate_flag==True):
+            return -1
+        if(self.pos_judge(self.scene.CAR_POS)==1):
+            self.terminate_flag=True
+            return 1 #win the game
         return 0
 
     def getCameraData(self):
@@ -66,4 +83,10 @@ class GameState:
     	return self.scene.get_3dcamera_data(camera_handle)
 
     def ifTerminal(self):
+        t=self.scene.collision_detection()
+        if(t==1):
+            return True
         return False
+
+    def pos_judge(self,pos):
+        return 0

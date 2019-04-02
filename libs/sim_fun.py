@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+#coding:utf-8
 '''
 designed for lab1 wirobot track
 '''
@@ -19,14 +21,24 @@ class SimRobot():
         else:
             print('Connected to simulation.')
             self.restart_sim()
-            self.setup_sim_cameras()
-            self.check_sim()
 
     def restart_sim(self):
-        sim_ret, self.UR5_target_handle = vrep.simxGetObjectHandle(self.sim_client,'Vision_sensor_static',vrep.simx_opmode_blocking)
+        #print('Starting Simulation')
+        self.init_Game_Parking()
+        #sim_ret, self.UR5_target_handle = vrep.simxGetObjectHandle(self.sim_client,'Vision_sensor_static',vrep.simx_opmode_blocking)
         vrep.simxStopSimulation(self.sim_client, vrep.simx_opmode_blocking)
-        vrep.simxStartSimulation(self.sim_client, vrep.simx_opmode_blocking)
         time.sleep(1)
+        ret=vrep.simxStartSimulation(self.sim_client, vrep.simx_opmode_blocking)
+        print('Starting new episode, return:',ret)
+        self.setup_sim_cameras()
+        self.check_sim()
+
+    def init_Game_Parking(self):
+        self.CAR_POS=[0,0]
+        self.TANK_NAME='Edgeless#0'
+        ret,self.TANK_HANDLE=vrep.simxGetObjectHandle(self.sim_client,self.TANK_NAME,vrep.simx_opmode_blocking)
+        ret,self.WALL_HANDLE=vrep.simxGetObjectHandle(self.sim_client,'building',vrep.simx_opmode_blocking)
+        #print(self.TANK_HANDLE,self.WALL_HANDLE)
 
     def check_sim(self):
         pass
@@ -34,8 +46,15 @@ class SimRobot():
     def get_3dcamera_data(self, camera_handle):
 
         # Get color image from simulation
-        sim_ret, resolution, raw_image = vrep.simxGetVisionSensorImage(self.sim_client, camera_handle, 0, vrep.simx_opmode_blocking)
+        sim_ret, resolution, raw_image = vrep.simxGetVisionSensorImage(self.sim_client,
+         camera_handle, 0, vrep.simx_opmode_blocking)
         
+        if(sim_ret!=0):
+            print('########Error getting image###########',sim_ret)
+            sim_ret, self.static_cam_handle = vrep.simxGetObjectHandle(self.sim_client, 
+                'Vision_sensor_static', vrep.simx_opmode_blocking)
+            sim_ret, resolution, raw_image = vrep.simxGetVisionSensorImage(self.sim_client,
+             camera_handle, 0, vrep.simx_opmode_blocking)
         color_img = np.asarray(raw_image)
         #print(color_img.shape)
         
@@ -116,10 +135,10 @@ class SimRobot():
         sim_ret, self.static_cam_handle = vrep.simxGetObjectHandle(self.sim_client, 'Vision_sensor_static', vrep.simx_opmode_blocking)
         #sim_ret, self.gripper_cam_handle = vrep.simxGetObjectHandle(self.sim_client, 'Vision_sensor_gripper', vrep.simx_opmode_blocking)
 
-        self.cam_intrinsics = np.asarray([[618.62, 0, 320], [0, 618.62, 240], [0, 0, 1]])
-        self.cam_depth_scale = 1
+        #self.cam_intrinsics = np.asarray([[618.62, 0, 320], [0, 618.62, 240], [0, 0, 1]])
+        #self.cam_depth_scale = 1
 
-        self.s_pose = self.get_camera_pose(self.static_cam_handle)
+        #self.s_pose = self.get_camera_pose(self.static_cam_handle)
         #self.g_pose = self.get_camera_pose(self.gripper_cam_handle)
 
         #print('s_pose is :')
@@ -129,7 +148,7 @@ class SimRobot():
 
         # Get background image
         #self.sbg_color_img, self.sbg_depth_img = self.get_camera_data(self.static_cam_handle)
-        self.sbg_color_img = self.get_camera_data(self.static_cam_handle)
+        #self.sbg_color_img = self.get_camera_data(self.static_cam_handle)
         #self.sbg_depth_img = self.sbg_depth_img * self.cam_depth_scale
 
         #self.gbg_color_img, self.gbg_depth_img = self.get_camera_data(self.gripper_cam_handle)
@@ -192,6 +211,11 @@ class SimRobot():
             pc_file.write(data)
         pc_file.close()
 
+    def setObjectPosition(self,handle,x,y,z):
+        ret=vrep.simxCallScriptFunction(self.sim_client,'remoteScript',vrep.sim_scripttype_childscript,'setObjectPosition',
+            [handle],[x,y,z],[],bytearray(),vrep.simx_opmode_blocking)
+        return ret
+
     def turn_left(self):
         self.set_Tank_Param(3)
 
@@ -208,5 +232,21 @@ class SimRobot():
         x=[0,0,0,0,0]
         x[index]=1
         #x=[0,1,0,0,0]
-        vrep.simxCallScriptFunction(self.sim_client,'Edgeless#0',vrep.sim_scripttype_childscript,'set_Tank_Param',
+        vrep.simxCallScriptFunction(self.sim_client,self.TANK_NAME,vrep.sim_scripttype_childscript,'set_Tank_Param',
             x,[],[],bytearray(),vrep.simx_opmode_blocking)
+
+    def setTankPos(self,pos):
+        self.setObjectPosition(self.TANK_HANDLE,pos[0],pos[1],1)
+
+    def collision_detection(self):
+        #ret,t=vrep.simxGetCollisionHandle(self.sim_client,'Collision0',vrep.simx_opmode_blocking)
+        #print(self.TANK_HANDLE,self.WALL_HANDLE)
+        x=[self.TANK_HANDLE,self.WALL_HANDLE]
+        #ret,t=vrep.simxCallScriptFunction(self.sim_client,'remoteScript',vrep.sim_scripttype_childscript,'remote_checkCollision',
+           # x,[],[],bytearray(),vrep.simx_opmode_blocking)
+        ret=vrep.simxCallScriptFunction(self.sim_client,'remoteScript',vrep.sim_scripttype_childscript,'remote_checkCollision',
+            [],[],[],bytearray(),vrep.simx_opmode_blocking)
+        if(ret[0]==0):
+            ret=ret[1]    
+            return ret[0]
+        return -1
